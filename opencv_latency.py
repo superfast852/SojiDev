@@ -24,6 +24,8 @@ class WebcamVideoStream:
 
     def stop(self):
         self.stopped = True
+    def get(self):
+        return(self.stream.get(cv2.CAP_PROP_FRAME_WIDTH), self.stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 class FPS:
     def __init__(self):
