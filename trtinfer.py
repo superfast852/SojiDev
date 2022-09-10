@@ -1,11 +1,8 @@
+# GitHub Repo Token: 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
+
 import logging, tracemalloc
-
-verbose_level = logging.DEBUG
+verbose_level = logging.DEBUG # logging.DEBUG or logging.ERROR are valid options
 logging.basicConfig(format= '[%(levelname)s]: %(message)s', level=verbose_level)
-if verbose_level == logging.DEBUG:
-    tracemalloc.start()
-    logging.debug("Started memory tracing")
-
 import torch
 import cv2
 import Label_xtr
@@ -18,25 +15,30 @@ from collections import OrderedDict, namedtuple
 from numpy import mean
 import socket
 
+if verbose_level == logging.DEBUG:
+    tracemalloc.start()
+    logging.debug("Started memory tracing")
 
-
+weights = './models/yolov7-nms.trt'  # yolov7-tiny-nms.trt
 device = torch.device('cuda:0')
-sox = False
+sox = True
 film = False
-text_color = (255,255,0)
+text_color = (255, 255, 0)
 box_color = (0, 255, 0)
 src = 0  # 0 for webcam, 1 for ext-webcam, "testvid.mp4" for trash vid, link for ip cam
-addr = ("localhost", 5000)
-warmup = True
+addr = ("192.168.0.101", 42069)
+bkup_addr = ("192.168.0.101", 9160)
+answer = False
+warmup = False
 warmup_time = 3
 warmup_rounds = 1000
-warmup_res = [640, 480]
+names = Label_xtr.coco
 
 
 def load(weights, device=torch.device('cuda:0')):
     # load model
     Binding = namedtuple('Binding', ('name', 'dtype', 'shape', 'data', 'ptr'))
-    logger = trt.Logger(trt.Logger.VERBOSE)
+    logger = trt.Logger(trt.Logger.VERBOSE if verbose_level == logging.DEBUG else trt.Logger.WARNING)
     trt.init_libnvinfer_plugins(logger, namespace="")
     with open(weights, 'rb') as f, trt.Runtime(logger) as runtime:
         model = runtime.deserialize_cuda_engine(f.read())
@@ -139,7 +141,7 @@ def filter_mcd(boxes, scores, min_confidence, ratio, dwdh):
         return None, None, None
 
 
-def pos_servo(det_center, frame, client, px=25, send=True):
+def pos_servo(det_center, frame, client, px=25, send=True, response = False):
     ccy, ccx = [x/2 for x in frame.shape[:2]]
 
     if ccx < det_center[0] - px:
@@ -160,7 +162,7 @@ def pos_servo(det_center, frame, client, px=25, send=True):
     if send:
         logging.info(f'Sending: {msg}')
         client.send(f'{xServ} {yServ}'.encode("utf-8"))
-        return client.recv(2048).decode("utf-8")
+        return client.recv(2048).decode("utf-8") if response or msg == "= =" else None
     else:
         logging.debug(msg)
 
@@ -168,6 +170,7 @@ def pos_servo(det_center, frame, client, px=25, send=True):
 def frame_debug(frame, px=25):
     cy, cx = frame.shape[:2]
     ccx = cx//2
+    ccy = cy//2
     ccy = cy//2
     cv2.rectangle(frame, (ccx-px, ccy-px), (ccx+px, ccy+px), (255, 0, 0), 2, cv2.LINE_AA)
 
@@ -181,36 +184,35 @@ framerate = [120]
 if sox:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     pcld = []
-    s.connect(addr)
+    try:
+        s.connect(addr)
+    except ConnectionRefusedError:
+        print(f'Connection to {addr} refused. Using backup address {bkup_addr}')
+        s.connect(bkup_addr)
     print('Connected to', addr)
-else:
-    s = ""
 
-weights = './models/yolov7-tiny-nms.trt'
-device = torch.device('cuda:0')
 binding_addrs, bindings, context = load(weights, device)
-vid = ocv.WebcamVideoStream(src=src).start()
-#vid = cv2.VideoCapture("testvid.mp4")
-names = Label_xtr.coco
 logging.debug(f'Loaded {len(names)} names')
 logging.debug(names)
-w, h = vid.get()
+
+vid = ocv.WebcamVideoStream(src=src).start()
+#vid = cv2.VideoCapture("testvid.mp4")
+w, h = [int(x) for x in vid.get()]
 logging.debug(f'Video size: {w}x{h}')
 if verbose_level == logging.DEBUG or film == True:
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('Soji-TRT-Out.avi', fourcc, 30.0, (int(w), int(h)))
 
 logging.debug("Memory Allocated: " + str(torch.cuda.memory_allocated(device)))
-logging.debug("Memory Cached: " + str(torch.cuda.memory_cached(device)))
 logging.debug("Memory Reserved: " + str(torch.cuda.memory_reserved(device)))
 logging.debug(f"Max Memory Used Before Main Loop: {tracemalloc.get_traced_memory()[1]}")
 logging.debug(f"Current Memory Usage: {tracemalloc.get_traced_memory()[0]}")
 
 if warmup:
     print("Warming up model. Please wait...")
-    warmup_start = time.time()
-    while time.time() - warmup_start < warmup_time:
-        test_data = torch.randn(1, 3, warmup_res[0], warmup_res[1]).to(device)
+    warmup_start = time.perf_counter()
+    while time.perf_counter() - warmup_start < warmup_time:
+        test_data = torch.randn(1, 3, w, h).to(device)
         infer(test_data, context, bindings, binding_addrs)
         if verbose_level == logging.DEBUG:
             cv2.imshow("Warmup Data", test_data.cpu().numpy()[0].transpose(1, 2, 0))
@@ -219,6 +221,7 @@ if warmup:
 
     print('Model Warmup complete.')
     print("Warming up camera. Starting in 3 seconds...")
+    logging.debug(vid.read().shape)
     for i in range(warmup_time*100):
         vid.read()
         time.sleep(0.01)
@@ -227,14 +230,12 @@ if warmup:
 while True:
     try:
         # img = cv2.imread('/home/gg-dev/yolov7/inference/images/horses.jpg')
-        start = time.time()
+        start = time.perf_counter()
         img = vid.read().copy()
 
         image, ratio, dwdh = prep_image(img, 640)
         dets, bboxes, conf, classes = infer(image, context, bindings, binding_addrs)
 
-        fps = 1/(time.time() - start)
-        framerate.append(fps)
 
         # bbox = draw_bbox_og(img, bboxes, conf, classes, (0,255,0), ratio, dwdh, names)
         bbox, best_conf, name_index = filter_mcd(bboxes, conf, 0.5, ratio, dwdh) if len(bboxes) > 0 else (None, None, None)
@@ -249,7 +250,7 @@ while True:
 
             try:
                 if sox:
-                    pcld.append(pos_servo((cx, cy), img, s))
+                    logging.debug(pos_servo((cx, cy), img, s, response=answer))
 
             except Exception as ex:
                 logging.info(ex)
@@ -258,28 +259,32 @@ while True:
                 s.close()
                 continue
 
-            if verbose_level == logging.DEBUG:
+            fps = 1/(time.perf_counter() - start)
+            framerate.append(fps)
+
+            if verbose_level == logging.INFO or verbose_level == logging.DEBUG:
                 frame_debug(img)
-                cv2.putText(img, f"FPS: {round(fps)}", (int(w - 200), int(h - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.75, text_color, thickness=2)
-                pos_servo((cx, cy), img, s, send=False)
+                cv2.putText(img, f"FPS: {round(fps)}", (w - 200, h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, text_color, thickness=2)
+                #pos_servo((cx, cy), img, s, send=False)
 
         cv2.imshow("Output", img)
         logging.debug(f"Memory Used: {tracemalloc.get_traced_memory()[0]}")
         if cv2.waitKey(1) & 0xFF == ord('q'):
             raise RuntimeError("Program terminated by Key Press")
-
     except Exception as e:
         logging.error(e)
         break
-
     except KeyboardInterrupt as k:
         logging.error("Keyboard Interrupt")
         break
 
+if sox:
+    s.send(b'disconnect')
 cv2.destroyAllWindows()
 #vid.release()
 vid.stop()
-print(f'Average FPS: ', mean(framerate))
+
+logging.info(f'Exited Program Successfully. Average FPS: {mean(framerate)}')
 logging.debug(f"Peak Memory Used: {tracemalloc.get_traced_memory()[1]}")
 
 
