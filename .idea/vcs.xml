@@ -3,7 +3,9 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external_repos/BreezySLAM" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external_repos/BreezySLAM-soji" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external_repos/py-qmc5883l" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external_repos/py-qmc5883l-soji" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/tensorrt-python" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/yolov7" vcs="Git" />
   </component>
