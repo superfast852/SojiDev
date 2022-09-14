@@ -21,12 +21,12 @@ if verbose_level == logging.DEBUG:
 
 weights = './models/yolov7-nms.trt'  # yolov7-tiny-nms.trt
 device = torch.device('cuda:0')
-sox = True
+sox = False
 film = False
 text_color = (255, 255, 0)
 box_color = (0, 255, 0)
 src = 0  # 0 for webcam, 1 for ext-webcam, "testvid.mp4" for trash vid, link for ip cam
-addr = ("192.168.0.101", 42069)
+addr = (socket.gethostbyname("soji.local") if sox else None, 42069)
 bkup_addr = ("192.168.0.101", 9160)
 answer = False
 warmup = False
