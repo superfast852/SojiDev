@@ -33,3 +33,4 @@ Si necesitan ayuda en algo, por favor diganme que estoy mas que feliz en ayudarl
 
 
 P.S. Les recomiendo que programen con musica, o algo similar. Realmente hace mucha diferencia :)
+P.P.S Si tienen un problema, pueden ir a la seccion de "Issues" o "Problemas" o algo similar, y creen uno nuevo. Asi, pueden mandarme problemas y puedo resolverlos de manera que no interrumpa con mis actividades. Gracias!
