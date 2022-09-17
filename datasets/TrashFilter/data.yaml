@@ -1,5 +1,0 @@
-train: datasets/TrashFilter/train/images
-val: datasets/TrashFilter/valid/images
-
-nc: 7
-names: ['cardboard', 'foam', 'glass', 'metal', 'other', 'paper', 'plastic']
