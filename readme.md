@@ -30,3 +30,6 @@ Para poder hacer lo pedido, primero deben investigar sobre la libreria utilizada
 Si necesitan ayuda en algo, por favor diganme que estoy mas que feliz en ayudarlos. No soy profesor ni voy a ponerles nota. Solo quiero que aprendan esta herramienta increiblemente util, y que disfruten el proceso.
 
 **-GG**
+
+
+P.S. Les recomiendo que programen con musica, o algo similar. Realmente hace mucha diferencia :)
