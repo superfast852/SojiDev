@@ -24,7 +24,7 @@ Para ustedes, hay 4 trabajos que pueden hacer:
 # *PARA TODOS*:
 
 Para poder hacer lo pedido, primero deben investigar sobre la libreria utilizada en el caso especifico. Los 2 mejores recursos para ello son: 
-> Buscar la libreria en google y leer la documentacion (Como si fuera un datasheet)
+> Buscar la libreria en google y leer la documentacion (Como si fuera un datasheet) \
 > Buscar la libreria en PyPI, ir a su pagina principal, y buscar ejemplos en youtube (Manera Preferida por mi)
 
 Si necesitan ayuda en algo, por favor diganme que estoy mas que feliz en ayudarlos. No soy profesor ni voy a ponerles nota. Solo quiero que aprendan esta herramienta increiblemente util, y que disfruten el proceso.
