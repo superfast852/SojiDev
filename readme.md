@@ -21,7 +21,7 @@ Para ustedes, hay 4 trabajos que pueden hacer:
 
 > Leer un codificador de motor y determinar que distancia ha viajado en una cierta cantidad de pulsos, donde los datos de entrada son (pulsos_por_rev, entrada_de_pulsos, diametro), y para conseguir la distancia deben calcular la circunferencia (diametro*pi)
 
-# *~PARA TODOS~*:
+# *PARA TODOS*:
 
 Para poder hacer lo pedido, primero deben investigar sobre la libreria utilizada en el caso especifico. Los 2 mejores recursos para ello son: 
 > Buscar la libreria en google y leer la documentacion (Como si fuera un datasheet)
